@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Host Quiz</title>
+  <style>
+    button {
+      margin: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Host Quiz</h1>
+  <div id="question"></div>
+  <div id="answers"></div>
+  <h2>Réponses des joueurs :</h2>
+  <pre id="playersAnswers"></pre>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const questionDiv = document.getElementById('question');
+    const answersDiv = document.getElementById('answers');
+    const playersAnswersPre = document.getElementById('playersAnswers');
+
+    socket.on('connect', () => {
+      console.log('Connecté avec id', socket.id);
+    });
+
+    socket.on('question', (question) => {
+      questionDiv.textContent = question.question;
+      answersDiv.innerHTML = '';
+      question.reponses.forEach((rep, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = rep + (i === question.bonne ? " (bonne)" : "");
+        answersDiv.appendChild(btn);
+      });
+    });
+
+    socket.on('playersAnswers', (players) => {
+      playersAnswersPre.textContent = JSON.stringify(players, null, 2);
+    });
+  </script>
+</body>
+</html>

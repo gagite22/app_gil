@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Player Quiz</title>
+  <style>
+    body {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+    button {
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      border-radius: 15px;
+      border: none;
+      cursor: pointer;
+      font-size: 0;
+      transition: transform 0.2s;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .color0 { background-color: red; }
+    .color1 { background-color: blue; }
+    .color2 { background-color: green; }
+    .color3 { background-color: yellow; }
+  </style>
+</head>
+<body>
+  <h1>Player Quiz</h1>
+  <div id="buttons"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const buttonsDiv = document.getElementById('buttons');
+
+    socket.on('connect', () => {
+      console.log('Connecté joueur avec id', socket.id);
+    });
+
+    socket.on('question', (question) => {
+      buttonsDiv.innerHTML = '';
+      question.reponses.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'color' + i;
+        btn.title = `Réponse ${i + 1}`; // Pour accessibilité
+        btn.onclick = () => {
+          socket.emit('answer', i);
+          alert('Réponse envoyée !');
+        };
+        buttonsDiv.appendChild(btn);
+      });
+    });
+  </script>
+</body>
+</html>

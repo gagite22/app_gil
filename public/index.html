@@ -2,11 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Mon Quiz Kahoot-like</title>
+  <title>Créer un quiz</title>
 </head>
 <body>
-  <h1>Bienvenue sur le quiz</h1>
-  <p>Page daccueil pour les joueurs.</p>
+  <h1>Créer un quiz</h1>
+  <form id="quizForm">
+    <button type="submit">Créer un quiz</button>
+  </form>
+  <p id="result"></p>
+
+  <script>
+    const form = document.getElementById('quizForm');
+    const result = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const response = await fetch('/create-quiz', { method: 'POST' });
+      const data = await response.json();
+      result.textContent = 'Quiz créé avec le code : ' + data.code;
+    });
+  </script>
 </body>
 </html>
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rejoindre un quiz</title>
+</head>
+<body>
+  <h1>Rejoindre un quiz</h1>
+  <form id="joinForm">
+    <input type="text" id="code" placeholder="Code du quiz" required />
+    <button type="submit">Rejoindre</button>
+  </form>
+
+  <p id="message"></p>
+
+  <script>
+    const form = document.getElementById('joinForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = document.getElementById('code').value.toUpperCase();
+
+      const response = await fetch(`/join-quiz/${code}`);
+      const data = await response.json();
+
+      if (data.success) {
+        message.textContent = "Tu as rejoint la partie !";
+        // TODO : rediriger vers la vraie salle ou question plus tard
+      } else {
+        message.textContent = "Code invalide ou quiz introuvable.";
+      }
+    });
+  </script>
+</body>
+</html>
