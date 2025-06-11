@@ -1,0 +1,23 @@
+{
+  "name": "app_gil",
+  "version": "1.0.0",
+  "main": "serveur.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gagite22/app_gil.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gagite22/app_gil/issues"
+  },
+  "homepage": "https://github.com/gagite22/app_gil#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
