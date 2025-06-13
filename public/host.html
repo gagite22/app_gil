@@ -1,47 +1,93 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Host Quiz</title>
-  <style>
-    button {
-      margin: 5px;
-      padding: 8px 12px;
-      font-size: 14px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Host Quiz</h1>
-  <div id="question"></div>
-  <div id="answers"></div>
-  <h2>Réponses des joueurs :</h2>
-  <pre id="playersAnswers"></pre>
+  <h1>🎮 Host Quiz</h1>
+
+  <div id="waitingPhase">
+    <h2>Le quiz va bientôt démarrer...</h2>
+    <p>Joueurs connectés :</p>
+    <ul id="playerList"></ul>
+    <button id="startQuizBtn">🚀 Démarrer le quiz</button>
+  </div>
+
+  <div id="quizPhase" style="display: none;">
+    <div id="question"></div>
+    <div id="reponses"></div>
+    <button id="nextBtn">➡️ Question suivante</button>
+    <div id="resultats"></div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const questionEl = document.getElementById('question');
+    const reponsesEl = document.getElementById('reponses');
+    const resultatsEl = document.getElementById('resultats');
+    const nextBtn = document.getElementById('nextBtn');
 
-    const questionDiv = document.getElementById('question');
-    const answersDiv = document.getElementById('answers');
-    const playersAnswersPre = document.getElementById('playersAnswers');
+    const waitingPhase = document.getElementById('waitingPhase');
+    const quizPhase = document.getElementById('quizPhase');
+    const playerList = document.getElementById('playerList');
+    const startQuizBtn = document.getElementById('startQuizBtn');
 
-    socket.on('connect', () => {
-      console.log('Connecté avec id', socket.id);
+    let couleurs = ['c0', 'c1', 'c2', 'c3'];
+
+    // Affiche la liste des joueurs connectés
+    socket.on('playerList', (pseudos) => {
+      playerList.innerHTML = '';
+      pseudos.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = p;
+        playerList.appendChild(li);
+      });
     });
 
-    socket.on('question', (question) => {
-      questionDiv.textContent = question.question;
-      answersDiv.innerHTML = '';
-      question.reponses.forEach((rep, i) => {
-        const btn = document.createElement('button');
-        btn.textContent = rep + (i === question.bonne ? " (bonne)" : "");
-        answersDiv.appendChild(btn);
+    // Le quiz démarre
+    socket.on('question', (q) => {
+      waitingPhase.style.display = 'none';
+      quizPhase.style.display = 'block';
+      questionEl.textContent = q.question;
+      reponsesEl.innerHTML = '';
+      resultatsEl.innerHTML = '';
+      q.reponses.forEach((rep, i) => {
+        const div = document.createElement('div');
+        div.className = `color-box ${couleurs[i]}`;
+        div.textContent = rep;
+        reponsesEl.appendChild(div);
       });
     });
 
     socket.on('playersAnswers', (players) => {
-      playersAnswersPre.textContent = JSON.stringify(players, null, 2);
+      resultatsEl.innerHTML = '<h3>Réponses des joueurs :</h3>';
+      for (let id in players) {
+        const p = players[id];
+        if (p.answer !== null) {
+          resultatsEl.innerHTML += `<p>${p.pseudo || id} : ✅ ${p.score} pts</p>`;
+        } else {
+          resultatsEl.innerHTML += `<p>${p.pseudo || id} : en attente...</p>`;
+        }
+      }
+    });
+
+    socket.on('quizEnd', (classement) => {
+      questionEl.textContent = "✅ Fin du quiz !";
+      reponsesEl.innerHTML = '<h3>Classement final :</h3><ol>' +
+        classement.map(p => `<li>${p.pseudo} – ${p.score} pts</li>`).join('') +
+        '</ol>';
+    });
+
+    // Bouton pour commencer le quiz
+    startQuizBtn.addEventListener('click', () => {
+      socket.emit('startQuiz');
+    });
+
+    nextBtn.addEventListener('click', () => {
+      socket.emit('nextQuestion');
     });
   </script>
 </body>

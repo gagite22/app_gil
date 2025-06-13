@@ -38,5 +38,11 @@ const questions = [
     question: "C est normal de se sentir fatigué.e.x à l approche des règles",
     reponses: ["Vrai", "Faux"],
     bonne: 1
+  },
+    {
+    question: "Quels sont des moyens de contraception",
+    reponses: ["stérilet", "retrait", "vasectomie", "hystérectomie"],
+    bonne: 0
   }
 ];
+module.exports = questions;

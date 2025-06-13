@@ -1,59 +1,75 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Player Quiz</title>
-  <style>
-    body {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 20px;
-    }
-    button {
-      width: 100px;
-      height: 100px;
-      margin: 10px;
-      border-radius: 15px;
-      border: none;
-      cursor: pointer;
-      font-size: 0;
-      transition: transform 0.2s;
-    }
-    button:active {
-      transform: scale(0.95);
-    }
-    .color0 { background-color: red; }
-    .color1 { background-color: blue; }
-    .color2 { background-color: green; }
-    .color3 { background-color: yellow; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Player Quiz</h1>
-  <div id="buttons"></div>
+  <h2>Entre ton pseudo</h2>
+  <input id="pseudoInput" placeholder="Ton nom" />
+  <button id="startBtn">Commencer</button>
+
+  <div id="waitingScreen" style="display: none; margin: 20px;">
+    <h2>👀 Tiens-toi prêt, le quiz va bientôt commencer !</h2>
+  </div>
+
+  <div id="quiz" style="display:none;">
+    <div id="waiting" style="margin:20px;"></div>
+    <div id="colorButtons"></div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const buttonsDiv = document.getElementById('buttons');
+    const pseudoInput = document.getElementById('pseudoInput');
+    const startBtn = document.getElementById('startBtn');
+    const quiz = document.getElementById('quiz');
+    const waiting = document.getElementById('waiting');
+    const colorButtons = document.getElementById('colorButtons');
+    const waitingScreen = document.getElementById('waitingScreen');
 
-    socket.on('connect', () => {
-      console.log('Connecté joueur avec id', socket.id);
+    let couleurs = ['c0', 'c1', 'c2', 'c3'];
+    let ready = false;
+
+    startBtn.addEventListener('click', () => {
+      const pseudo = pseudoInput.value.trim();
+      if (pseudo) {
+        socket.emit('pseudo', pseudo);
+        document.querySelector('h2').style.display = 'none';
+        pseudoInput.style.display = 'none';
+        startBtn.style.display = 'none';
+        waitingScreen.style.display = 'block';
+        ready = true;
+      }
     });
 
-    socket.on('question', (question) => {
-      buttonsDiv.innerHTML = '';
-      question.reponses.forEach((_, i) => {
+    socket.on('question', (q) => {
+      if (!ready) return;
+      waitingScreen.style.display = 'none';
+      quiz.style.display = 'block';
+      waiting.textContent = "Choisis une couleur :";
+      colorButtons.innerHTML = '';
+      q.reponses.forEach((_, i) => {
         const btn = document.createElement('button');
-        btn.className = 'color' + i;
-        btn.title = `Réponse ${i + 1}`; // Pour accessibilité
-        btn.onclick = () => {
-          socket.emit('answer', i);
-          alert('Réponse envoyée !');
-        };
-        buttonsDiv.appendChild(btn);
+        btn.className = `color-button ${couleurs[i]}`;
+        btn.onclick = () => socket.emit('answer', i);
+        colorButtons.appendChild(btn);
       });
+    });
+
+    socket.on('waiting', () => {
+      if (!ready) return;
+      waiting.textContent = "🕒 En attente des autres joueurs...";
+      colorButtons.innerHTML = '';
+    });
+
+    socket.on('quizEnd', (classement) => {
+      if (!ready) return;
+      waiting.textContent = "✅ Quiz terminé !";
+      colorButtons.innerHTML = '<h3>Classement final :</h3><ol>' +
+        classement.map(p => `<li>${p.pseudo} – ${p.score} pts</li>`).join('') +
+        '</ol>';
     });
   </script>
 </body>

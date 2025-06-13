@@ -1,0 +1,128 @@
+/* Styles généraux */
+body {
+  font-family: 'Arial', sans-serif;
+  font-size: 42px;
+  background-color: #6675bd;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+h1, h2 {
+  margin: 20px;
+  color: #333;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+
+button {
+  padding: 20px 40px;
+  margin: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 12px;
+  border: none;
+  transition: background-color 0.3s ease;
+  min-width: 220px;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.color-box {
+  display: inline-block;
+  padding: 30px 50px;
+  margin: 15px;
+  font-size: 26px;
+  color: rgb(255, 255, 255);
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  min-width: 250px;
+  text-align: center;
+  user-select: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.color-box:hover {
+  transform: scale(1.05);
+}
+
+.c0 { background-color: rgb(163, 82, 82); }
+.c1 { background-color: rgb(61, 61, 161); }
+.c2 { background-color: rgb(78, 151, 78); }
+.c3 { background-color: rgb(175, 175, 86); color: black; }
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.scoreboard {
+  margin-top: 30px;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+}
+
+.scoreboard ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.scoreboard li {
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+/* === MEDIA QUERIES === */
+
+/* Sur écrans petits (max 600px) : téléphone surtout */
+@media (max-width: 600px) {
+  button {
+    width: 90%;
+    padding: 25px 0;
+    font-size: 28px;
+    min-width: unset;
+    margin: 12px auto;
+  }
+  .color-box {
+    display: block;
+    width: 90%;
+    padding: 35px 0;
+    font-size: 32px;
+    margin: 15px auto;
+    min-width: unset;
+  }
+  .scoreboard {
+    max-width: 95%;
+    padding: 15px;
+  }
+}
+
+/* Sur écrans moyens (tablettes) */
+@media (min-width: 601px) and (max-width: 900px) {
+  button {
+    min-width: 180px;
+    font-size: 22px;
+  }
+  .color-box {
+    min-width: 200px;
+    font-size: 24px;
+    padding: 25px 40px;
+  }
+}
