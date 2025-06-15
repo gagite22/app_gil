@@ -1,17 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Player Quiz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>Entre ton pseudo</h2>
-  <input id="pseudoInput" placeholder="Ton nom" />
-  <button id="startBtn">Commencer</button>
+  <h2>🎮 Rejoins une partie</h2>
 
-  <div id="waitingScreen" style="display: none; margin: 20px;">
-    <h2>👀 Tiens-toi prêt, le quiz va bientôt commencer !</h2>
+  <div id="joinSection">
+    <input id="pinInput" placeholder="Code PIN" maxlength="6" />
+    <input id="pseudoInput" placeholder="Ton pseudo" />
+    <button id="joinBtn">Rejoindre</button>
+  </div>
+
+  <div id="waitingRoom" style="display:none;">
+    <p>🕒 En attente que la partie commence...</p>
   </div>
 
   <div id="quiz" style="display:none;">
@@ -22,54 +26,84 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+
+    const pinInput = document.getElementById('pinInput');
     const pseudoInput = document.getElementById('pseudoInput');
-    const startBtn = document.getElementById('startBtn');
+    const joinBtn = document.getElementById('joinBtn');
+
+    const joinSection = document.getElementById('joinSection');
+    const waitingRoom = document.getElementById('waitingRoom');
     const quiz = document.getElementById('quiz');
     const waiting = document.getElementById('waiting');
     const colorButtons = document.getElementById('colorButtons');
-    const waitingScreen = document.getElementById('waitingScreen');
 
-    let couleurs = ['c0', 'c1', 'c2', 'c3'];
-    let ready = false;
+    const couleurs = ['c0', 'c1', 'c2', 'c3'];
 
-    startBtn.addEventListener('click', () => {
+    let currentPIN = null;
+
+    joinBtn.addEventListener('click', () => {
+      const pin = pinInput.value.trim();
       const pseudo = pseudoInput.value.trim();
-      if (pseudo) {
-        socket.emit('pseudo', pseudo);
-        document.querySelector('h2').style.display = 'none';
-        pseudoInput.style.display = 'none';
-        startBtn.style.display = 'none';
-        waitingScreen.style.display = 'block';
-        ready = true;
+      if (pin && pseudo) {
+        currentPIN = pin;
+        socket.emit('joinGame', { pin, pseudo });
+      }
+    });
+
+    socket.on('joinedGame', ({ status }) => {
+      if (status === 'waiting') {
+        joinSection.style.display = 'none';
+        waitingRoom.style.display = 'block';
       }
     });
 
     socket.on('question', (q) => {
-      if (!ready) return;
-      waitingScreen.style.display = 'none';
+      waitingRoom.style.display = 'none';
       quiz.style.display = 'block';
-      waiting.textContent = "Choisis une couleur :";
+      waiting.textContent = "❓ Choisis une réponse :";
       colorButtons.innerHTML = '';
+
       q.reponses.forEach((_, i) => {
         const btn = document.createElement('button');
         btn.className = `color-button ${couleurs[i]}`;
-        btn.onclick = () => socket.emit('answer', i);
+        btn.onclick = () => {
+          socket.emit('answer', { pin: currentPIN, index: i });
+          disableButtons();
+        };
         colorButtons.appendChild(btn);
       });
     });
 
+    function disableButtons() {
+      const buttons = document.querySelectorAll('.color-button');
+      buttons.forEach(btn => btn.disabled = true);
+    }
+
     socket.on('waiting', () => {
-      if (!ready) return;
       waiting.textContent = "🕒 En attente des autres joueurs...";
       colorButtons.innerHTML = '';
     });
 
     socket.on('quizEnd', (classement) => {
-      if (!ready) return;
       waiting.textContent = "✅ Quiz terminé !";
       colorButtons.innerHTML = '<h3>Classement final :</h3><ol>' +
         classement.map(p => `<li>${p.pseudo} – ${p.score} pts</li>`).join('') +
         '</ol>';
+    });
+
+    socket.on('resetToLobby', () => {
+      quiz.style.display = 'none';
+      joinSection.style.display = 'block';
+      waitingRoom.style.display = 'none';
+      waiting.textContent = '';
+      colorButtons.innerHTML = '';
+    });
+
+    socket.on('invalidPIN', () => {
+      alert("❌ Code PIN invalide !");
+      pinInput.value = '';
+      joinSection.style.display = 'block';
+      waitingRoom.style.display = 'none';
     });
   </script>
 </body>

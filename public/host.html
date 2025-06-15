@@ -1,21 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Host Quiz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🎮 Host Quiz</h1>
+  <h1>Host Quiz</h1>
 
-  <div id="waitingPhase">
-    <h2>Le quiz va bientôt démarrer...</h2>
-    <p>Joueurs connectés :</p>
-    <ul id="playerList"></ul>
-    <button id="startQuizBtn">🚀 Démarrer le quiz</button>
+  <div id="lobby">
+    <button id="createGameBtn">🎮 Créer une partie</button>
+    <div id="gameInfo" style="display: none;">
+      <p><strong>Code PIN :</strong> <span id="pinDisplay"></span></p>
+      <h3>Joueurs connectés :</h3>
+      <ul id="playerList"></ul>
+      <button id="startGameBtn">🚀 Démarrer la partie</button>
+    </div>
   </div>
 
-  <div id="quizPhase" style="display: none;">
+  <div id="game" style="display:none;">
+    <div id="top-bar">
+      <span id="pinTop"></span>
+      <button id="homeBtn">🏠 Accueil</button>
+    </div>
+
     <div id="question"></div>
     <div id="reponses"></div>
     <button id="nextBtn">➡️ Question suivante</button>
@@ -25,32 +33,56 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+
+    let currentPIN = null;
+
+    const createGameBtn = document.getElementById('createGameBtn');
+    const gameInfo = document.getElementById('gameInfo');
+    const pinDisplay = document.getElementById('pinDisplay');
+    const playerList = document.getElementById('playerList');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const homeBtn = document.getElementById('homeBtn');
+
+    const lobby = document.getElementById('lobby');
+    const game = document.getElementById('game');
+    const pinTop = document.getElementById('pinTop');
+
     const questionEl = document.getElementById('question');
     const reponsesEl = document.getElementById('reponses');
     const resultatsEl = document.getElementById('resultats');
     const nextBtn = document.getElementById('nextBtn');
 
-    const waitingPhase = document.getElementById('waitingPhase');
-    const quizPhase = document.getElementById('quizPhase');
-    const playerList = document.getElementById('playerList');
-    const startQuizBtn = document.getElementById('startQuizBtn');
+    const couleurs = ['c0', 'c1', 'c2', 'c3'];
 
-    let couleurs = ['c0', 'c1', 'c2', 'c3'];
+    createGameBtn.addEventListener('click', () => {
+      socket.emit('createGame');
+    });
 
-    // Affiche la liste des joueurs connectés
-    socket.on('playerList', (pseudos) => {
+    socket.on('gameCreated', (pin) => {
+      currentPIN = pin;
+      pinDisplay.textContent = pin;
+      pinTop.textContent = `Code PIN : ${pin}`;
+      gameInfo.style.display = 'block';
+    });
+
+    socket.on('updatePlayers', (players) => {
       playerList.innerHTML = '';
-      pseudos.forEach(p => {
+      players.forEach(p => {
         const li = document.createElement('li');
-        li.textContent = p;
+        li.textContent = p.pseudo;
         playerList.appendChild(li);
       });
     });
 
-    // Le quiz démarre
+    startGameBtn.addEventListener('click', () => {
+      if (currentPIN) {
+        socket.emit('startGame', currentPIN);
+        lobby.style.display = 'none';
+        game.style.display = 'block';
+      }
+    });
+
     socket.on('question', (q) => {
-      waitingPhase.style.display = 'none';
-      quizPhase.style.display = 'block';
       questionEl.textContent = q.question;
       reponsesEl.innerHTML = '';
       resultatsEl.innerHTML = '';
@@ -62,16 +94,23 @@
       });
     });
 
-    socket.on('playersAnswers', (players) => {
+    socket.on('updatePlayers', (players) => {
       resultatsEl.innerHTML = '<h3>Réponses des joueurs :</h3>';
-      for (let id in players) {
-        const p = players[id];
-        if (p.answer !== null) {
-          resultatsEl.innerHTML += `<p>${p.pseudo || id} : ✅ ${p.score} pts</p>`;
-        } else {
-          resultatsEl.innerHTML += `<p>${p.pseudo || id} : en attente...</p>`;
-        }
-      }
+      players.forEach(p => {
+        resultatsEl.innerHTML += p.answer !== null
+          ? `<p>${p.pseudo} : ✅ ${p.score} pts</p>`
+          : `<p>${p.pseudo} : en attente...</p>`;
+      });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      socket.emit('nextQuestion', currentPIN);
+    });
+
+    homeBtn.addEventListener('click', () => {
+      socket.emit('resetGame', currentPIN);
+      game.style.display = 'none';
+      lobby.style.display = 'block';
     });
 
     socket.on('quizEnd', (classement) => {
@@ -81,13 +120,10 @@
         '</ol>';
     });
 
-    // Bouton pour commencer le quiz
-    startQuizBtn.addEventListener('click', () => {
-      socket.emit('startQuiz');
-    });
-
-    nextBtn.addEventListener('click', () => {
-      socket.emit('nextQuestion');
+    socket.on('resetToLobby', () => {
+      questionEl.textContent = '';
+      reponsesEl.innerHTML = '';
+      resultatsEl.innerHTML = '';
     });
   </script>
 </body>
